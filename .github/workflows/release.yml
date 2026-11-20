@@ -1,0 +1,66 @@
+name: Build & Release RtCoD Launcher
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+      - name: Build Windows .exe
+        run: pyinstaller --noconfirm --onefile --windowed --name "RtCoD-Launcher-Windows" --add-data "assets;assets" run_launcher.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RtCoD-Launcher-Windows
+          path: dist/RtCoD-Launcher-Windows.exe
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+      - name: Build Linux binary
+        run: |
+          pyinstaller --noconfirm --onefile --windowed \
+            --name "RtCoD-Launcher-Linux" \
+            --add-data "assets:assets" \
+            run_launcher.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RtCoD-Launcher-Linux
+          path: dist/RtCoD-Launcher-Linux
+
+  publish-release:
+    needs: [build-windows, build-linux]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/RtCoD-Launcher-Windows/RtCoD-Launcher-Windows.exe
+            artifacts/RtCoD-Launcher-Linux/RtCoD-Launcher-Linux
