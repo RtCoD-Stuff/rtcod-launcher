@@ -1,4 +1,4 @@
-"""Centralized server defaults for RtCoD Launcher v1.0.0."""
+"""Centralized server defaults for RtCoD Launcher v1.0.1."""
 
 from __future__ import annotations
 
